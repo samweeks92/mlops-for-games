@@ -1,12 +1,13 @@
 resource "google_compute_network" "vpc_network" {
   project                 = var.project_id
-  name                    = "default"
+  name                    = var.vpc_name
   auto_create_subnetworks = true
   mtu                     = 1460
   routing_mode            = "REGIONAL"
 }
 
 resource "google_compute_firewall" "default-allow-internal" {
+  project  = var.project_id
   name    = "default-allow-internal"
   network = google_compute_network.vpc_network.name
 
@@ -29,6 +30,7 @@ resource "google_compute_firewall" "default-allow-internal" {
 }
 
 resource "google_compute_firewall" "default-allow-ssh" {
+  project  = var.project_id
   name    = "default-allow-ssh"
   network = google_compute_network.vpc_network.name
 
@@ -42,6 +44,7 @@ resource "google_compute_firewall" "default-allow-ssh" {
 }
 
 resource "google_compute_firewall" "default-allow-icmp" {
+  project  = var.project_id
   name    = "default-allow-icmp"
   network = google_compute_network.vpc_network.name
 
