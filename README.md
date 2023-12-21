@@ -79,6 +79,12 @@ gcloud compute firewall-rules create default-allow-icmp \
 
 0. [OPTIONAL] If you are running this in a restricted Google Cloud environment, you may need to reduce the restrictions on certain Organisation Policies before deployment. If you are authorised to do so, you can run this .sh file to configure Org Policies appropriately:
 ```
+export GCP_PROJECT_ID=<CHANGE ME>
+```
+```
+gcloud config set project $GCP_PROJECT_ID
+```
+```
 . org-policy-setup.sh
 ```
 
@@ -86,11 +92,13 @@ gcloud compute firewall-rules create default-allow-icmp \
 
 2. Save the name of your Cloud Source Repos repo and your GCP Region to the setup file:
 ```
-cp "setup.example.sh" "setup.sh"
-
 export GCP_PROJECT_ID=<CHANGE ME>
 export GCP_REGION=<CHANGE ME> #We have tested for us-central1, but you may want to try with another region
 export CLOUD_SOURCE_REPO_NAME=<CHANGE ME>
+```
+
+```
+cp "setup.example.sh" "setup.sh"
 
 # For Windows machines:
 # sed -i "s/YOUR_GCP_REGION/$GCP_REGION/g" "setup.sh"

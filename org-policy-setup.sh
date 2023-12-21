@@ -11,9 +11,6 @@ if ! gcloud auth list &>/dev/null; then
   gcloud auth application-default login
 fi
 
-# Get GCP Project ID and Project Number from gcloud
-export GCP_PROJECT_ID=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
-
 mkdir scripts
 mkdir scripts/.tmp
 

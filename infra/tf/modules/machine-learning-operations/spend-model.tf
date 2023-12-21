@@ -138,11 +138,17 @@ resource "google_service_account" "pipeline_service_account" {
   display_name = "Vertex AI Pipeline SA - managed through terraform"
 }
 
+resource "google_project_service_identity" "ai_platform_sa" {
+  provider = google-beta
+  project = var.project_id
+  service = "aiplatform.googleapis.com"
+}
+
 # Grant the Vertex AI Service Agent SA with permissions to create Service Account tokens (for the Pipeline SA)
 resource "google_project_iam_member" "vertex-serivice-agent-token-creator" {
   project = var.project_id
   role    = "roles/iam.serviceAccountTokenCreator"
-  member  = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-aiplatform.iam.gserviceaccount.com"
+  member  = "serviceAccount:${google_project_service_identity.ai_platform_sa.email}"
 }
 
 # Grant the Pipeline Triggers SA permissions to act as the Pipeline SA

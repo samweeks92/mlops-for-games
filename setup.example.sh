@@ -11,16 +11,18 @@ if ! gcloud auth list &>/dev/null; then
   gcloud auth application-default login
 fi
 
-# Get GCP Project ID and Project Number from gcloud
+# 1. Get GCP Project ID and Project Number from gcloud
 export GCP_PROJECT_ID=YOUR_PROJECT_ID
 export GCP_REGION=YOUR_GCP_REGION
 export CLOUD_SOURCE_REPO_NAME=YOUR_CLOUD_SOURCE_REPO_NAME
 
+# 2. Set Project ID
+gcloud config set project $GCP_PROJECT_ID
+
 export GCP_PROJECT_NUMBER=$(gcloud projects describe "$GCP_PROJECT_ID" --format="value(projectNumber)" 2>/dev/null)
 export TF_STATE_BUCKET_NAME=$GCP_PROJECT_ID-tf-state
 
-
-# Enable Google Cloud APIs required for deployments
+# 3. Enable Google Cloud APIs required for deployments
 gcloud services enable \
 iam.googleapis.com \
 cloudbuild.googleapis.com \
@@ -30,7 +32,8 @@ compute.googleapis.com \
 servicecontrol.googleapis.com \
 container.googleapis.com \
 artifactregistry.googleapis.com \
-bigquery.googleapis.com
+bigquery.googleapis.com \
+bigquerydatatransfer.googleapis.com
 
 # 4. Create GCS Bucket for the Terraform Init state
 
@@ -46,6 +49,7 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/iam.serviceAccountCreator
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/viewer
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/cloudbuild.builds.editor
+gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/compute.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/compute.networkAdmin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/compute.loadBalancerAdmin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/servicenetworking.serviceAgent
@@ -62,6 +66,7 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/run.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/dataform.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/secretmanager.admin
+gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/artifactregistry.admin
 
 # 6.  Apply the Build Trigger for the infrastructure
 

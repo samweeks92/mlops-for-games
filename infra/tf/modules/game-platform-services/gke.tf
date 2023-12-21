@@ -16,7 +16,7 @@ resource "google_container_cluster" "unified-data-cluster" {
   project  = var.project_id
   name     = var.gke_cluster_name
   location = var.region
-  network  = var.vpc_name
+  network  = google_compute_network.vpc_network.name
 
   ip_allocation_policy {}
 
