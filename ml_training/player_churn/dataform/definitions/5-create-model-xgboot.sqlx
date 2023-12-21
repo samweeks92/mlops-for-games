@@ -1,0 +1,16 @@
+config {
+  type: "operations",
+  hasOutput: true,
+  name: "churn_xgb"
+}
+
+CREATE OR REPLACE MODEL
+  ${self()}
+OPTIONS(
+  MODEL_TYPE="BOOSTED_TREE_CLASSIFIER",
+  INPUT_LABEL_COLS=["churned"]
+) AS
+SELECT
+  * EXCEPT(user_pseudo_id)
+FROM
+  ${ref("churn_training_data")}

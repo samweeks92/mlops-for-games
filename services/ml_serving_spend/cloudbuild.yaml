@@ -1,0 +1,42 @@
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args: ['gsutil', 'cp', '-r', 'gs://${_MLOPS_BUCKET_NAME}/${_MODEL_ID}/tf-saved-model', './services/ml_serving_spend']
+  - name: ubuntu
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |-
+      mv ./services/ml_serving_spend/tf-saved-model/${_MODEL_TIMESTAMP} ./services/ml_serving_spend/tf-saved-model/spend
+      export ARTIFACT_REPO_REGION=${_ARTIFACT_REPO_REGION}
+      export GCP_PROJECT_ID=${_GCP_PROJECT_ID}
+      apt-get update
+      apt-get install -y gettext-base
+      envsubst < "./k8s/templates/namespace-wi.example.yaml" > "./k8s/namespace-wi.yaml"
+      envsubst < "./k8s/templates/ml-serving-spend.example.yaml" > "./k8s/ml-serving-spend.yaml"
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'services/ml_serving_spend'
+    args: [
+      'build',
+      '-t',
+      '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/spend_serving:latest',
+      '.'
+    ]
+  - name: "gcr.io/cloud-builders/docker"
+    dir: 'services/ml_serving_spend'
+    args: [
+      'push',
+      '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/spend_serving:latest',
+    ]
+  - name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+    - run
+    - --filename=k8s/
+    - --location=${_ARTIFACT_REPO_REGION}
+    - --cluster=game-platform-services
+  - name: "gcr.io/cloud-builders/kubectl"
+    args: ["rollout", "restart", "deployment/ml-serving-spend", "-n", "game-event-ns"]
+    env:
+      - "CLOUDSDK_COMPUTE_REGION=$_ARTIFACT_REPO_REGION"
+      - "CLOUDSDK_CONTAINER_CLUSTER=game-platform-services"
+images:
+- '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/spend_serving:latest'

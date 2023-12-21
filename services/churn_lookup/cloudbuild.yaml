@@ -1,0 +1,41 @@
+steps:
+- name: ubuntu
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |-
+    export ARTIFACT_REPO_REGION=${_ARTIFACT_REPO_REGION}
+    export GCP_PROJECT_ID=${_GCP_PROJECT_ID}
+    apt-get update
+    apt-get install -y gettext-base
+    envsubst < "./k8s/templates/namespace-wi.example.yaml" > "./k8s/namespace-wi.yaml"
+    envsubst < "./k8s/templates/churn-lookup.example.yaml" > "./k8s/churn-lookup.yaml"
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'services/churn_lookup'
+  args: [
+    'build',
+    '-t',
+    '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest',
+    '--build-arg',
+    'BUCKET_NAME=${_BUCKET_NAME}',
+    '.'
+  ]
+- name: "gcr.io/cloud-builders/docker"
+  dir: 'services/churn_lookup'
+  args: [
+    'push',
+    '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest',
+  ]
+- name: "gcr.io/cloud-builders/gke-deploy"
+  args:
+  - run
+  - --filename=k8s/
+  - --location=${_ARTIFACT_REPO_REGION}
+  - --cluster=game-platform-services
+- name: "gcr.io/cloud-builders/kubectl"
+  args: ["rollout", "restart", "deployment/churn-lookup", "-n", "game-event-ns"]
+  env:
+    - "CLOUDSDK_COMPUTE_REGION=$_ARTIFACT_REPO_REGION"
+    - "CLOUDSDK_CONTAINER_CLUSTER=game-platform-services"
+images:
+- '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest'

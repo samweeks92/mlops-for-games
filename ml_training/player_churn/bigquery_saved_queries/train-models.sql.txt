@@ -1,0 +1,47 @@
+###################################
+# Train a logistic regression model
+###################################
+-- CREATE OR REPLACE MODEL `unified_data.churn_logreg`
+
+-- OPTIONS(
+--   MODEL_TYPE="LOGISTIC_REG",
+--   INPUT_LABEL_COLS=["churned"]
+-- ) AS
+
+-- SELECT
+--   *
+-- FROM
+--   `unified_data.churn_training_data`
+
+
+###################################
+# Train an XGBoost model
+###################################
+-- CREATE OR REPLACE MODEL `unified_data.churn_xgb`
+
+-- OPTIONS(
+--   MODEL_TYPE="BOOSTED_TREE_CLASSIFIER",
+--   INPUT_LABEL_COLS=["churned"]
+-- ) AS
+
+-- SELECT
+--   * EXCEPT(user_pseudo_id)
+-- FROM
+--   `unified_data.churn_training_data`
+
+
+
+###################################
+# Train a Deep Neural Network model
+###################################
+-- CREATE OR REPLACE MODEL `unified_data.churn_dnn`
+
+-- OPTIONS(
+--   MODEL_TYPE="DNN_CLASSIFIER",
+--   INPUT_LABEL_COLS=["churned"]
+-- ) AS
+
+-- SELECT
+--   * EXCEPT(user_pseudo_id)
+-- FROM
+--   `unified_data.churn_training_data`

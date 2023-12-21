@@ -1,0 +1,7 @@
+{
+    "defaultSchema": "unified_data",
+    "assertionSchema": "dataform_assertions",
+    "warehouse": "bigquery",
+    "defaultDatabase": "UPDATE-TO-YOUR-PROJECT-ID",
+    "defaultLocation": "US"
+  }

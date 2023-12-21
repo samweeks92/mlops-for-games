@@ -1,0 +1,5 @@
+config {
+  type: "declaration",
+  schema: "unified_data",
+  name: "game_telemetry"
+}

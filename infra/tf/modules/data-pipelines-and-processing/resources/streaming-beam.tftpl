@@ -1,0 +1,30 @@
+{
+    "defaultEnvironment": {},
+    "image": "${region}-docker.pkg.dev/${project_id}/services-images/dataflow/streaming-beam:latest",
+    "metadata": {
+        "description": "Streaming beam example for python flex template.",
+        "name": "Streaming beam Python flex template",
+        "parameters": [
+            {
+                "helpText": "Name of the input PubSub topic to consume from.",
+                "label": "Input PubSub topic.",
+                "name": "input_topic",
+                "regexes": [
+                    "projects/[^/]+/topics/[a-zA-Z][-_.~+%a-zA-Z0-9]{2,}"
+                ]
+            },
+            {
+                "helpText": "Name of the BigQuery output table name.",
+                "isOptional": true,
+                "label": "BigQuery output table name.",
+                "name": "output_table",
+                "regexes": [
+                    "([^:]+:)?[^.]+[.].+"
+                ]
+            }
+        ]
+    },
+    "sdkInfo": {
+        "language": "PYTHON"
+    }
+}

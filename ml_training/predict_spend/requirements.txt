@@ -1,0 +1,8 @@
+google-cloud-aiplatform>=1.15
+google-cloud-pipeline-components
+google-cloud-bigquery
+tensorflow==2.15.0
+pandas
+db-dtypes
+scikit-learn
+kfp

@@ -1,0 +1,233 @@
+# DETAILED DOCUMENTATION IS HERE: https://github.com/GoogleCloudPlatform/analytics-componentized-patterns/blob/master/gaming/propensity-model/bqml/bqml_ga4_gaming_propensity_to_churn.ipynb
+
+
+
+
+
+######################################################################################
+#Count distinct users and number of events (15K users and 5.7M events in this dataset)
+######################################################################################
+-- SELECT
+--     COUNT(DISTINCT user_pseudo_id) as count_distinct_users,
+--     COUNT(event_timestamp) as count_events
+-- FROM
+--   `unified_data.game_telemetry`
+
+
+
+##################################################################################
+#PREPROCESSING: identifying churned users
+#
+# Create a definition for a CHURNED and a BOUNCED user
+# Identify these users in the dataset and create columns bounced and churned
+# Create a View with these data
+##################################################################################
+-- CREATE OR REPLACE VIEW `unified_data.returning_users` AS (
+--   WITH firstlasttouch AS (
+--     SELECT
+--       user_pseudo_id,
+--       MIN(event_timestamp) AS user_first_engagement,
+--       MAX(event_timestamp) AS user_last_engagement
+--     FROM
+--       `unified_data.game_telemetry`
+--     WHERE event_name="user_engagement"
+--     GROUP BY
+--       user_pseudo_id
+--   )
+--   SELECT
+--     user_pseudo_id,
+--     user_first_engagement,
+--     user_last_engagement,
+--     EXTRACT(MONTH from TIMESTAMP_MICROS(user_first_engagement)) as month,
+--     EXTRACT(DAYOFYEAR from TIMESTAMP_MICROS(user_first_engagement)) as julianday,
+--     EXTRACT(DAYOFWEEK from TIMESTAMP_MICROS(user_first_engagement)) as dayofweek,
+
+--     #add 24 hr to user's first touch
+--     (user_first_engagement + 86400000000) AS ts_24hr_after_first_engagement,
+
+--   #churned = 1 if last_touch within 24 hr of app installation, else 0
+--   IF (user_last_engagement < (user_first_engagement + 86400000000),
+--       1,
+--       0 ) AS churned,
+
+--   #bounced = 1 if last_touch within 10 min, else 0
+--   IF (user_last_engagement <= (user_first_engagement + 600000000),
+--       1,
+--       0 ) AS bounced,
+--     FROM
+--       firstlasttouch
+--     GROUP BY
+--       1,2,3
+-- );
+
+
+
+##################################################################################
+#See the View
+##################################################################################
+-- SELECT 
+--   * 
+-- FROM 
+--   `unified_data.returning_users`
+
+
+
+##################################################################################
+#Group and count the bounced and churned users
+##################################################################################
+-- SELECT
+--     bounced,
+--     churned, 
+--     COUNT(churned) as count_users
+-- FROM
+--     `unified_data.returning_users`
+-- GROUP BY 1,2
+-- ORDER BY bounced
+
+
+
+##################################################################################
+#See churned user rate as a percentage
+##################################################################################
+-- SELECT
+--     COUNTIF(churned=1)/COUNT(churned) as churn_rate
+-- FROM
+--     `unified_data.returning_users`
+-- WHERE bounced = 0
+
+
+##################################################################################
+#PREPROCESSING: Identifying demographic information
+#
+# Step1: Extract demographic information (country, operating system, language)
+# Step2: Create a View with these data
+##################################################################################
+-- CREATE OR REPLACE VIEW `unified_data.user_demographics` AS (
+--   WITH first_values AS (
+--       SELECT
+--           user_pseudo_id,
+--           geo.country as country,
+--           device.operating_system as operating_system,
+--           device.language as language,
+--           ROW_NUMBER() OVER (PARTITION BY user_pseudo_id ORDER BY event_timestamp DESC) AS row_num
+--       FROM `unified_data.game_telemetry`
+--       WHERE event_name="user_engagement"
+--       )
+--   SELECT * EXCEPT (row_num)
+--   FROM first_values
+--   WHERE row_num = 1
+-- );
+
+
+##################################################################################
+#See the View
+##################################################################################
+-- SELECT
+--   *
+-- FROM
+--   `unified_data.user_demographics`
+
+
+#############################################################################################################
+#PREPROCESSING: Identifying behavioural data
+# Step1: 
+# view all possible event_name values (and their occurance)
+# Step2:
+# For each returning user, count the number of occurances of each event_name withing the first 24hrs
+# Step3:
+# Create a View with these data
+#############################################################################################################
+-- SELECT
+--     event_name,
+--     COUNT(event_name) as event_count
+-- FROM
+--     `unified_data.game_telemetry`
+-- GROUP BY 1
+-- ORDER BY
+--    event_count DESC
+
+#Aggregate the behavioral data by calculating the total number of times each event_name occured per user
+-- CREATE OR REPLACE VIEW `unified_data.user_aggregate_behavior` AS (
+--   WITH
+--     events_first24hr AS (
+--       #select user data only from first 24 hr of using the app
+--       SELECT
+--         e.*
+--       FROM
+--         `unified_data.game_telemetry` e
+--       JOIN
+--         unified_data.returning_users r
+--       ON
+--         e.user_pseudo_id = r.user_pseudo_id
+--       WHERE
+--         e.event_timestamp <= r.ts_24hr_after_first_engagement
+--       )
+--   SELECT
+--     user_pseudo_id,
+--     SUM(IF(event_name = 'user_engagement', 1, 0)) AS cnt_user_engagement,
+--     SUM(IF(event_name = 'level_start_quickplay', 1, 0)) AS cnt_level_start_quickplay,
+--     SUM(IF(event_name = 'level_end_quickplay', 1, 0)) AS cnt_level_end_quickplay,
+--     SUM(IF(event_name = 'level_complete_quickplay', 1, 0)) AS cnt_level_complete_quickplay,
+--     SUM(IF(event_name = 'level_reset_quickplay', 1, 0)) AS cnt_level_reset_quickplay,
+--     SUM(IF(event_name = 'post_score', 1, 0)) AS cnt_post_score,
+--     SUM(IF(event_name = 'spend_virtual_currency', 1, 0)) AS cnt_spend_virtual_currency,
+--     SUM(IF(event_name = 'ad_reward', 1, 0)) AS cnt_ad_reward,
+--     SUM(IF(event_name = 'challenge_a_friend', 1, 0)) AS cnt_challenge_a_friend,
+--     SUM(IF(event_name = 'completed_5_levels', 1, 0)) AS cnt_completed_5_levels,
+--     SUM(IF(event_name = 'use_extra_steps', 1, 0)) AS cnt_use_extra_steps,
+--   FROM
+--     events_first24hr
+--   GROUP BY
+--     1
+-- );
+
+
+-- SELECT
+--   *
+-- FROM
+--   `unified_data.user_aggregate_behavior`
+
+
+#############################################################################################################
+#PREPROCESSING: Create final training data table
+#
+# Step1: Combine the churn, demographic and behavioral data to create the final training data
+# Step2: Create a View with these data
+#############################################################################################################
+-- CREATE OR REPLACE VIEW `unified_data.churn_training_data` AS (
+    
+--   SELECT
+--     dem.*,
+--     IFNULL(beh.cnt_user_engagement, 0) AS cnt_user_engagement,
+--     IFNULL(beh.cnt_level_start_quickplay, 0) AS cnt_level_start_quickplay,
+--     IFNULL(beh.cnt_level_end_quickplay, 0) AS cnt_level_end_quickplay,
+--     IFNULL(beh.cnt_level_complete_quickplay, 0) AS cnt_level_complete_quickplay,
+--     IFNULL(beh.cnt_level_reset_quickplay, 0) AS cnt_level_reset_quickplay,
+--     IFNULL(beh.cnt_post_score, 0) AS cnt_post_score,
+--     IFNULL(beh.cnt_spend_virtual_currency, 0) AS cnt_spend_virtual_currency,
+--     IFNULL(beh.cnt_ad_reward, 0) AS cnt_ad_reward,
+--     IFNULL(beh.cnt_challenge_a_friend, 0) AS cnt_challenge_a_friend,
+--     IFNULL(beh.cnt_completed_5_levels, 0) AS cnt_completed_5_levels,
+--     IFNULL(beh.cnt_use_extra_steps, 0) AS cnt_use_extra_steps,
+--     ret.user_first_engagement,
+--     ret.month,
+--     ret.julianday,
+--     ret.dayofweek,
+--     ret.churned
+--   FROM
+--     `unified_data.returning_users` ret
+--   LEFT OUTER JOIN
+--     `unified_data.user_demographics` dem
+--   ON 
+--     ret.user_pseudo_id = dem.user_pseudo_id
+--   LEFT OUTER JOIN 
+--     `unified_data.user_aggregate_behavior` beh
+--   ON
+--     ret.user_pseudo_id = beh.user_pseudo_id
+--   WHERE ret.bounced = 0
+-- );
+
+-- SELECT
+--   *
+-- FROM
+--   `unified_data.churn_training_data`

@@ -1,0 +1,74 @@
+#####################################
+#Evaluate Logistic Regression Model #
+#####################################
+
+-- SELECT 
+--   * 
+-- FROM 
+--   ML.EVALUATE(MODEL `unified_data.churn_logreg`)
+
+-- SELECT
+--   expected_label,
+--   _0 AS predicted_0,
+--   _1 AS predicted_1
+-- FROM
+--   ML.CONFUSION_MATRIX(MODEL `unified_data.churn_logreg`)
+
+-- SELECT
+--   user_pseudo_id,
+--   churned,
+--   predicted_churned,
+--   predicted_churned_probs[OFFSET(0)].prob as probability_churned
+-- FROM
+--   ML.PREDICT(MODEL `unified_data.churn_logreg`,
+--   (SELECT * FROM `unified_data.churn_training_data`)) #can be replaced with a test dataset
+
+#########################
+#Evaluate XGBoost Model #
+#########################
+
+-- SELECT 
+--   * 
+-- FROM 
+--   ML.EVALUATE(MODEL `unified_data.churn_xgb`)
+
+-- SELECT
+--   expected_label,
+--   _0 AS predicted_0,
+--   _1 AS predicted_1
+-- FROM
+--   ML.CONFUSION_MATRIX(MODEL `unified_data.churn_xgb`)
+
+-- SELECT
+--   user_pseudo_id,
+--   churned,
+--   predicted_churned,
+--   predicted_churned_probs[OFFSET(0)].prob as probability_churned
+-- FROM
+--   ML.PREDICT(MODEL `unified_data.churn_xgb`,
+--   (SELECT * FROM `unified_data.churn_training_data`)) #can be replaced with a test dataset
+
+#####################
+#Evaluate DNN Model #
+#####################
+
+-- SELECT 
+--   * 
+-- FROM 
+--   ML.EVALUATE(MODEL `unified_data.churn_dnn`)
+
+-- SELECT
+--   expected_label,
+--   _0 AS predicted_0,
+--   _1 AS predicted_1
+-- FROM
+--   ML.CONFUSION_MATRIX(MODEL `unified_data.churn_dnn`)
+
+-- SELECT
+--   user_pseudo_id,
+--   churned,
+--   predicted_churned,
+--   predicted_churned_probs[OFFSET(0)].prob as probability_churned
+-- FROM
+--   ML.PREDICT(MODEL `unified_data.churn_dnn`,
+--   (SELECT * FROM `unified_data.churn_training_data`)) #can be replaced with a test dataset

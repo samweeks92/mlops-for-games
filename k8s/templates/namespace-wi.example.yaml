@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: game-event-ns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    iam.gke.io/gcp-service-account: udp-sa@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+  name: udp-k8s-sa
+  namespace: game-event-ns

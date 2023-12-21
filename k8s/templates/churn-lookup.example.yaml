@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    Service.kubernetes.io/topology-aware-hints: auto
+  name: churn-lookup-service
+  namespace: game-event-ns
+  labels:
+    app: churn-lookup
+spec:
+  selector:
+    app: churn-lookup
+  ports:
+    - name: tcp
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: churn-lookup
+  namespace: game-event-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: churn-lookup
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: churn-lookup
+    spec:
+      serviceAccountName: udp-k8s-sa
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+        - name: churn-lookup
+          image: "${ARTIFACT_REPO_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/services-images/churn-lookup:latest"
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 250m
+              memory: 2Gi

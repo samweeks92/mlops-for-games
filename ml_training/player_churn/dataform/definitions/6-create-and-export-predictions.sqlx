@@ -1,0 +1,25 @@
+config {
+  type: "operations",
+  hasOutput: true,
+  name: "create_and_export"
+}
+
+EXPORT DATA
+OPTIONS (
+    uri = 'gs://${dataform.projectConfig.vars.bucket_name}/churn-batch-predictions/*.csv',
+    format = 'CSV',
+    overwrite = true,
+    header = true,
+    field_delimiter = ';'
+)
+AS (
+  SELECT
+    user_pseudo_id,
+    churned,
+    predicted_churned,
+    predicted_churned_probs[OFFSET(0)].prob as probability_churned
+  FROM
+    ML.PREDICT(MODEL ${ref("churn_xgb")},
+    (SELECT * FROM ${ref("churn_training_data")}))
+  ORDER BY probability_churned DESC
+);

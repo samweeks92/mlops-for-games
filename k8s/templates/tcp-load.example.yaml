@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-load
+  namespace: game-event-ns
+spec:
+  replicas: 15
+  selector:
+    matchLabels:
+      app: tcp-load
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: tcp-load
+    spec:
+      serviceAccountName: udp-k8s-sa
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+      - name: tcp-load
+        image: "${ARTIFACT_REPO_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/services-images/tcp-load:latest"
+        imagePullPolicy: Always
+        env:
+          - name: RUNTIME_SECONDS
+            value: "180"
+          - name: EVENT_INGEST_SERVICE_NAME
+            value: "event-ingest-service"
+          - name: EVENT_INGEST_SERVICE_NAMESPACE
+            value: "game-event-ns"
+          - name: EVENT_INGEST_SERVICE_PORT
+            value: "80"
+          - name: EVENT_INGEST_SERVICE_IP
+            value: ""
+        ports:
+          - containerPort: 7777
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 2Gi
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - event-ingest
+              topologyKey: "kubernetes.io/hostname"

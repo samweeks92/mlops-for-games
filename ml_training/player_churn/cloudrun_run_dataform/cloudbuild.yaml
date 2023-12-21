@@ -1,0 +1,16 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  dir: "ml_training/player_churn/cloudrun_run_dataform"
+  args: [
+    'build',
+    '-t',
+    '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest',
+    '.'
+  ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'churn-run-dataform', '--image', '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest', '--region', '${_ARTIFACT_REPO_REGION}']
+images:
+- '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/$_GCP_PROJECT_ID/${_ARTIFACT_REPO_NAME}/${_IMAGE_NAME}:latest'

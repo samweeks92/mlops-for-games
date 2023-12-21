@@ -1,0 +1,52 @@
+######################################
+#Batch prediction with XGBoost Model #
+######################################
+
+-- SELECT
+--   user_pseudo_id,
+--   churned,
+--   predicted_churned,
+--   predicted_churned_probs[OFFSET(0)].prob as probability_churned
+-- FROM
+--   ML.PREDICT(MODEL `unified_data.churn_xgb`,
+--   (SELECT * FROM `unified_data.churn_training_data`)) #can be replaced with a test dataset
+-- ORDER BY probability_churned DESC
+
+#########################################
+#Batch prediction for only active users #
+#########################################
+
+# This returns the users who have not yet churned but have a high probability of doing so according to the model
+
+-- SELECT
+--   user_pseudo_id as churned_pseudo_user_id,
+--   predicted_churned,
+--   predicted_churned_probs[OFFSET(0)].prob as probability_churned
+-- FROM
+--   ML.PREDICT(MODEL `unified_data.churn_xgb`,
+--   (SELECT * FROM `unified_data.churn_training_data`)) #can be replaced with a test dataset
+-- WHERE churned = 0 #only return users that have not already churned
+-- ORDER BY probability_churned DESC
+
+########################
+#Export results to GCS #
+########################
+
+--   EXPORT DATA
+--   OPTIONS (
+--     uri = 'gs://<YOUR-PROJECT-ID>-mlops-churn/churn-batch-predictions/*.csv', #REPLACE WITH YOUR PROJECT ID
+--     format = 'CSV',
+--     overwrite = true,
+--     header = true,
+--     field_delimiter = ';')
+-- AS (
+--   SELECT
+--     user_pseudo_id,
+--     churned,
+--     predicted_churned,
+--     predicted_churned_probs[OFFSET(0)].prob as probability_churned
+--   FROM
+--     ML.PREDICT(MODEL `unified_data.churn_xgb`,
+--     (SELECT * FROM `unified_data.churn)training_data`)) #can be replaced with a test dataset
+--   ORDER BY probability_churned DESC
+-- );

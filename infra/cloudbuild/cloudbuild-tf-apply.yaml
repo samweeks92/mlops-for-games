@@ -1,0 +1,11 @@
+steps:
+    - name: 'hashicorp/terraform:1.0.0'
+      dir: 'infra/tf'
+      entrypoint: 'sh'
+      args:
+      - '-c'
+      - |-      
+        # Init and Apply Terraform
+        terraform init -backend-config=bucket=$_TF_STATE_BUCKET_NAME_
+        terraform apply -var project_id=$_PROJECT_ID_ -var region=$_GCP_REGION -var project_number=$_PROJECT_NUMBER_ -var tf_state_bucket_name=$_TF_STATE_BUCKET_NAME_ -var cloud_source_repo_name=$_CLOUD_SOURCE_REPO_NAME_ --auto-approve
+timeout: 3600s

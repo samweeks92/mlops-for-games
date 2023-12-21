@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'services/dataflow'
+  args: [
+    'build',
+    '-t',
+    '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/dataflow/${_IMAGE_NAME}',
+    '.'
+  ]
+images:
+- '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/dataflow/${_IMAGE_NAME}'
