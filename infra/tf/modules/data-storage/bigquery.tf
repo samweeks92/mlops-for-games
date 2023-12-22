@@ -73,6 +73,12 @@ resource "google_service_account_iam_member" "terraform-runner-actas" {
   member             = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
 }
 
+resource "google_service_account_iam_member" "data-transfer-act-as" {
+  service_account_id = google_service_account.service_account.id
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${data.google_project.project.number}gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com"
+}
+
 # Copy data from the source table to the new partitioned table
 resource "google_bigquery_data_transfer_config" "copy_data" {
   depends_on = [
