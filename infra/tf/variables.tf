@@ -66,6 +66,6 @@ variable "bigquery_config" {
 
 variable "game_telemetry_topic" {
   type        = string
-  default     = "ggame_telemetry_streaming_topic"
+  default     = "game_telemetry_streaming_topic"
   description = "The name of the game telemetry pubsub topic"
 }
