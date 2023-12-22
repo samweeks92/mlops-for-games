@@ -7,9 +7,7 @@ steps:
     '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/dataflow/${_IMAGE_NAME}',
     '.'
   ]
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: 
-  - gcloud dataflow flex-template run streaming-beam --template-file-gcs-location gs://${_GCP_PROJECT_ID}-dataflow/templates/streaming-beam-tf.json --parameters input_topic=projects/${_GCP_PROJECT_ID}/topics/${_TOPIC_NAME} --parameters output_table=${_GCP_PROJECT_ID}:${_DATASET_ID}.${_TABLE_NAME}
-
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+  args: ['gcloud', 'dataflow', 'flex-template', 'run', 'streaming-beam', '--template-file-gcs-location', 'gs://${_GCP_PROJECT_ID}-dataflow/templates/streaming-beam-tf.json', '--parameters', 'input_topic=projects/${_GCP_PROJECT_ID}/topics/${_TOPIC_NAME}', '--parameters', 'output_table=${_GCP_PROJECT_ID}:${_DATASET_ID}.${_TABLE_NAME}']
 images:
 - '${_ARTIFACT_REPO_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_ARTIFACT_REPO_NAME}/dataflow/${_IMAGE_NAME}'
