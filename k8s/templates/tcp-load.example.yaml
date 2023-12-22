@@ -23,7 +23,7 @@ spec:
         iam.gke.io/gke-metadata-server-enabled: "true"
       containers:
       - name: tcp-load
-        image: "${ARTIFACT_REPO_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/services-images/tcp-load:latest"
+        image: "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/services-images/tcp-load:latest"
         imagePullPolicy: Always
         env:
           - name: RUNTIME_SECONDS

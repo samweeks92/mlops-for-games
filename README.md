@@ -88,31 +88,17 @@ Once the Terraform rolls out successfully, you can continue to the MLOps setup.
 
 Once Terraform has successfully rolled out, there will be a number of Cloud Build Triggers created that should each be run to build the required Docker Images used across the architecture.
 
-4. Build and deploy the streaming-beam Dataflow service
+4. Run the remaining Cloud Build triggers to build the container images for each of the custom services.
 
-This Image is built from the source code in /services/dataflow.
-This pipeline will pull event messages published onto a PubSub Topic (default topic name is game_telemetry_streaming_topic), then run some transformation steps and write the events to the BigQuery table (default table is: unified_data.game_telemetry)
-The Cloud Build Trigger that was created by Terraform in the previous step will build the Image for your events streaming pipeline that will run on Dataflow.
+We suggest you read the comments in the .sh file below to give you an understanding of what each of these services are:
 
-- Run the Cloud Build job for the streaming-beam service via its Cloud Build Trigger:
 ```
-gcloud builds triggers run streaming-beam --region=$GCP_REGION --project=$GCP_PROJECT_ID --branch=main
+. run-build-triggers.sh
 ```
 
-Check the status of the build, and wait until all it has completed before moving on to the next step.
+Check the status of each of the builds, and wait until all have completed before moving on to the next step.
 
-5. Build and deploy the event-ingest service
-
-The Event Ingest service will be deployed to GKE and is responsible for receiving and routing all game telemetry data from Game clients through to the MLOps pipeline.
-The Event Ingest service is also resposible for sending spend prediction requests to the spend ml serving image and returning prediction results back to the game clients.
-The Event Ingest service is also resposible for sending churn lookup requests to the churn lookup service and returning user churn results back to the game clients.
-
-- Run the Cloud Build job for the event-ingest service via its Cloud Build Trigger that was created by Terraform in the previous step:
-```
-gcloud builds triggers run event-ingest --region=$GCP_REGION --project=$GCP_PROJECT_ID --branch=main
-```
-
-6. Test the event-ingest endpoint
+5. Test the event-ingest endpoint
 
 Get the Pod name of event ingest service running on GKE:
 ```
@@ -161,14 +147,6 @@ Once the pipeline completes, a Cloud Build job is run that builds a Docker image
 1. Triggering the pipeline manually
 
 Most prerequisites have been deployed and configured for this use case through the Terraform applied previously.
-
-What remains is to build and deploy a custom Cloud Run service that sits between the Vertex AI Pipeline and the Cloud Build job to containerise the model. This Cloud Build servics is essentially a filter, and allows us to only trigger the Cloud Build job when the `saved_model.pb` file is updated. Otherwise, Cloud Build would be triggered for every update of any Object in the `gs://<PROJECT_ID>-mlops-spend` bucket.
-
-- Build and Deploy the Cloud Run trigger service:
-```
-gcloud builds triggers run ml-training-spend-cloudrun-build-serving-image	--region=$GCP_REGION --project=$GCP_PROJECT_ID --branch=main
-```
-Now the pipeline can be ran, and the outputted model files will automatically be built into a serving image and deployed to GKE.
 
 The pipeline configuration file has been deployed to GCS at the location `gs://<PROJECT_ID>-mlops-spend/spend_pipeline.yaml` and can be seen in the source code at [infra/tf/modules/machine-learning-operations/resources/spend_pipeline.yaml](infra/tf/modules/machine-learning-operations/resources/spend_pipeline.yaml). The Vertex AI pipeline can be run manually with the [pipeline.py](ml_training/predict_spend/pipeline.py) file. There is also an interactive notebook [pipeline.ipynb](ml_training/predict_spend/pipeline.ipynb) containing the same code, which could be uploaded as a Vertex AI Workbench to similuate a Data Scientist's developer environment.
 
@@ -275,13 +253,7 @@ The Vertex AI Pipeline is configured to be automatically triggered in the event 
 
 <br>
 
-Most of this this is already setup through the Terraform applied previously. As before, what remains is to deploy the custom Cloud Run triggering service used to create the Pipeline Job in the event of the BigQuery update alert being fired.
-
-```
-gcloud builds triggers run ml-training-spend-cloudrun-run-pipeline --region=$GCP_REGION --project=$GCP_PROJECT_ID --branch=main
-```
-
-We are now ready to trigger the end-to-end MlOps pipeline by increasing the traffic load from game clients that is sent through to the event ingest service and on to BigQuery.
+We are now ready to trigger the end-to-end MLOps pipeline by increasing the traffic load from game clients that is sent through to the event ingest service and on to BigQuery.
 
 To increase the load into BigQuery enough to trigger the pipeline, we can edit and deploy the [tcp-load Deployment](k8s/templates/tcp-load.example.yaml). The default is 10 replicas which will each sent a stream of messages for 3 minutes. This will be enough to triger the Monitoring Alert and run the pipeline:
 ```
@@ -341,7 +313,7 @@ Once you have done this, you would have analysed each of the models to understan
 
 Once you have done this, you would have created batch prediction results from the models that give the probabiliy of each user churning. The final query will export the results to a GCS file, so the results can be used as a lookup by the event-ingest service and provide low latency notifications to game clients if a user has a high likelyhood of churning. 
 
-5. Deploy the churn-lookup service to provide low-latency churn lookups for the event-ingest service
+5. Review the churn-lookup service that provides low-latency churn lookups for the event-ingest service
 
 As part of the Terraform rollout in step 1, the following has already been created:
 *   A Cloud Storage PubSub notification that sends a PubSub message to topic `churn-model-artifacts-update-notifications` whenever the batch prediction export .csv from step 4 is updated
@@ -409,8 +381,17 @@ This way, we can create:
 *  Sequential execution of SQL commands, with parameterisation, variable assignment and input/output control
 *  A cron-based release schedule to run the MLOps workflow at regular intervals.
 
-As well as run on a schedule, we can also run immediately via an API call, as so as before we can setup a triggering flow based on the arrival of new data into BigQuery:
-BigQuery > Cloud Monitoring Alert > PubSub notification topic > Cloud Run service invocation > Cloud Run schedules a workflow execution via the Dataform API.
+As well as run on a schedule, we can also run immediately via an API call, as so as before we can setup a triggering flow based on the arrival of new data into BigQuery.
+
+Most of these components are already in place from the Terraform rollout:
+*   A Cloud Monitoring Alert Policy that is configured to fire an alert when the Write threshold into BigQuery exceeds a threshold (default is 1000 requests delta in 15 mins) 
+*   A Cloud Monitoring Notification Channel to send a message to a PubSub Topic when the alert is fired
+*   A PubSub Push subscription to push an HTTP message to a Cloud Run endpoint
+*   A Cloud Run service invoked by the PubSub topic above, which triggers the Dataform release execution.
+*  Dataform repository
+*  Dataform workflow and release configurations
+*  PubSub notification topic to listen to updates on the GCS Bucket where batch prediction results will be exported
+*  A Cloud Build job that is triggered by the PubSub message that builds a churn-lookup service and deploys it to the cluster for low-latency serving.
 
 This end-to-end MLOps pipeline is shown in the diagram below:
 
@@ -420,24 +401,7 @@ This end-to-end MLOps pipeline is shown in the diagram below:
 
 <br>
 
-Most of these components are already in place from the Terraform rollout:
-*  Cloud Monitoring Alert
-*  PubSub notification topic
-*  Placeholder Cloud Run service
-*  Dataform repository
-*  Dataform workflow and release configurations
-
-All that remains is to:
-*  build and deploy the triggering image into the Cloud Run placeholder service
-*  Create a Dataform Workspace and add the Dataform definition files into it
-
-Create the Cloud Run service by running its Cloud Build trigger:
-
-```
-gcloud builds triggers run ml-training-churn-cloudrun-run-dataform --region=$GCP_REGION --project=$GCP_PROJECT_ID --branch=main
-```
-
-Add the Dataform definition files to Dataform:
+All that remains is to create a Dataform Workspace and add the Dataform definition files into it.
 
 The files you need can be found at [ml_training/player_churn/dataform/](./ml_training/player_churn/dataform/). Create a [Dataform workspace](https://cloud.google.com/dataform/docs/create-workspace) and either follow the instructions to [connect to a third-party repository](https://cloud.google.com/dataform/docs/connect-repository) or manually upload the files into your workspace. You should end up with a workspace that looks like this:
 
@@ -446,12 +410,6 @@ The files you need can be found at [ml_training/player_churn/dataform/](./ml_tra
 Workflow and release configurations are already in place to run this series of SQL statements at a regular interval (default is every 24hrs). 
 
 9. Triggering the pipeline automatically through increased game telemetry load:
-
-The churn use case is now setup for a full end-to-end automatic triggering in the event of increased numbers of Write requests are sent from Dataflow to BigQuery. There are a number of components involved in this:
-*   A Cloud Monitoring Alert Policy that is configured to fire an alert when the Write threshold into BigQuery exceeds a threshold (default is 1000 requests delta in 15 mins) 
-*   A Cloud Monitoring Notification Channel to send a message to a PubSub Topic when the alert is fired
-*   A PubSub Push subscription to push an HTTP message to a Cloud Run endpoint
-*   A Cloud Run service invoked by the PubSub topic above, which triggers the Dataform release execution.
 
 To increase the load into BigQuery enough to trigger the pipeline, we can edit and deploy the [tcp-load Deployment](k8s/templates/tcp-load.example.yaml). The default is 15 replicas which will each sent a stream of messages for 3 minutes. This will be enough to triger the Monitoring Alert and run the pipeline:
 ```

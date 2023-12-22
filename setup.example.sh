@@ -33,7 +33,8 @@ servicecontrol.googleapis.com \
 container.googleapis.com \
 artifactregistry.googleapis.com \
 bigquery.googleapis.com \
-bigquerydatatransfer.googleapis.com
+bigquerydatatransfer.googleapis.com \
+aiplatform.googleapis.com
 
 # 4. Create GCS Bucket for the Terraform Init state
 
@@ -54,6 +55,7 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/compute.loadBalancerAdmin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/servicenetworking.serviceAgent
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/container.clusterAdmin
+gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/container.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/vpcaccess.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/storage.admin
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member=serviceAccount:$GCP_PROJECT_NUMBER@cloudbuild.gserviceaccount.com  --condition=None --role=roles/storage.objectAdmin
