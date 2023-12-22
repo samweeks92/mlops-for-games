@@ -87,25 +87,25 @@ resource "google_storage_bucket_object" "config" {
   ]
 }
 
-# Upload the config file used to define the Dataflow Template streaming job.
-resource "google_dataflow_flex_template_job" "streaming-job" {
-  provider                = google-beta
-  project                 = var.project_id
-  region                  = var.region
-  name                    = "dataflow-streaming-job-tf"
-  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow-config-bucket.name}/templates/streaming-beam-tf.json"
-  parameters = {
-    input_topic = "projects/${var.project_id}/topics/${var.game_telemetry_topic}",
-    output_table= "${var.project_id}:${var.bigquery_config.dataset}.${var.bigquery_config.table}"
-  }
+# # Upload the config file used to define the Dataflow Template streaming job.
+# resource "google_dataflow_flex_template_job" "streaming-job" {
+#   provider                = google-beta
+#   project                 = var.project_id
+#   region                  = var.region
+#   name                    = "dataflow-streaming-job-tf"
+#   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow-config-bucket.name}/templates/streaming-beam-tf.json"
+#   parameters = {
+#     input_topic = "projects/${var.project_id}/topics/${var.game_telemetry_topic}",
+#     output_table= "${var.project_id}:${var.bigquery_config.dataset}.${var.bigquery_config.table}"
+#   }
 
-  depends_on = [
-    google_project_service.dataflow-api-enable,
-    google_project_iam_member.dataflow-sa-object-admin,
-    google_project_iam_member.dataflow-sa-dataflow-worker,
-    google_project_iam_member.dataflow-sa-pubsub-admin,
-    google_project_iam_member.dataflow-sa-bq-data-editor,
-    google_storage_bucket_object.config
-  ]
+#   depends_on = [
+#     google_project_service.dataflow-api-enable,
+#     google_project_iam_member.dataflow-sa-object-admin,
+#     google_project_iam_member.dataflow-sa-dataflow-worker,
+#     google_project_iam_member.dataflow-sa-pubsub-admin,
+#     google_project_iam_member.dataflow-sa-bq-data-editor,
+#     google_storage_bucket_object.config
+#   ]
 
-}
+# }

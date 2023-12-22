@@ -17,7 +17,7 @@ module "data-pipelines-and-processing" {
 
   project_id           = var.project_id
   region               = var.region
-  game_telemetry_topic = "game_telemetry_streaming_topic"
+  game_telemetry_topic = var.game_telemetry_topic
   bigquery_config      = var.bigquery_config
 
 }

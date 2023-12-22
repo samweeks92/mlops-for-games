@@ -73,6 +73,9 @@ module "ci-triggers-dataflow-streaming-beam" {
     _ARTIFACT_REPO_NAME                  = google_artifact_registry_repository.services.repository_id
     _ARTIFACT_REPO_REGION                = var.region
     _IMAGE_NAME                          = "streaming-beam"
+    _TOPIC_NAME                          = var.game_telemetry_topic
+    _DATASET_ID                          = var.bigquery_config.dataset
+    _TABLE_NAME                          = var.bigquery_config.table
   }
 
 }

@@ -43,40 +43,6 @@ A high level architecture is show here, with more detailed use-case specigic dia
 
 # Setting up the Platform 
 
-### Pre-requisites
-
-The Unified Data Framework assumes assumes default VPC settings and firewall rules. In the case that that those are not in place, you can view the following commands below to configure the starting point.
-
-VPC:
-
-```
-gcloud compute networks create default \
-    --subnet-mode=auto \
-    --bgp-routing-mode=regional \
-    --mtu=1460
-```
-
-Firewall rules:
-
-```
-gcloud compute firewall-rules create default-allow-internal \
-  --network default \
-  --allow tcp:0-65535,udp:0-65535,icmp \
-  --source-ranges 10.128.0.0/9
-
-gcloud compute firewall-rules create default-allow-ssh \
-  --network default \
-  --allow tcp:22 \
-  --source-ranges 0.0.0.0/0
-
-gcloud compute firewall-rules create default-allow-icmp \
-  --network default \
-  --allow icmp \
-  --source-ranges 0.0.0.0/0
-```
-
-### Provision Cloud Infrastructure via Terraform
-
 0. [OPTIONAL] If you are running this in a restricted Google Cloud environment, you may need to reduce the restrictions on certain Organisation Policies before deployment. If you are authorised to do so, you can run this .sh file to configure Org Policies appropriately:
 ```
 export GCP_PROJECT_ID=<CHANGE ME>

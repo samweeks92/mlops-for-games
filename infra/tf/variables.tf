@@ -63,3 +63,9 @@ variable "bigquery_config" {
     table       = "game_telemetry"
   }
 }
+
+variable "game_telemetry_topic" {
+  type        = string
+  default     = "ggame_telemetry_streaming_topic"
+  description = "The name of the game telemetry pubsub topic"
+}
