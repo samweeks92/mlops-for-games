@@ -173,9 +173,9 @@ resource "google_service_account_iam_member" "gcb-sa-actas-pipeline-triggers-sa"
 }
 
 # Grant the Pipeline SA AI Platform User
-resource "google_project_iam_member" "pipeline-sa-aiplatform-user" {
+resource "google_project_iam_member" "pipeline-sa-aiplatform-admin" {
   project = var.project_id
-  role    = "roles/aiplatform.user"
+  role    = "roles/aiplatform.admin"
   member  = "serviceAccount:${google_service_account.pipeline_service_account.email}"
 }
 
